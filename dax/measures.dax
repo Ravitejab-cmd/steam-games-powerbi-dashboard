@@ -1,0 +1,57 @@
+// ============================================================================
+// Steam Games Power BI Dashboard — DAX measures
+// Table name in Power BI: SteamGames  (imported from data/steam_clean.csv)
+// Paste each measure into the SteamGames table via
+// Modeling > New measure. All measures were kept intentionally simple and
+// use only columns produced by data-prep.py.
+// ============================================================================
+
+// --- Page 1: Overview KPIs -----------------------------------------------------
+
+Total Games =
+COUNTROWS ( SteamGames )
+
+Total Reviews =
+SUM ( SteamGames[total_reviews] )
+
+Avg Positive Ratio =
+// Average of the per-game positive-review ratio (games with 50+ reviews
+// are the reliable base; apply a visual/page filter total_reviews >= 50
+// where you want the noise filtered out).
+AVERAGE ( SteamGames[pos_ratio] )
+
+Median Price =
+// Median across all games; use a "price > 0" visual filter for paid only.
+MEDIAN ( SteamGames[price] )
+
+Free Share % =
+// Share of the catalog that is free-to-play.
+DIVIDE (
+    CALCULATE ( COUNTROWS ( SteamGames ), SteamGames[price] = 0 ),
+    COUNTROWS ( SteamGames )
+)
+
+Free Games =
+CALCULATE ( COUNTROWS ( SteamGames ), SteamGames[price] = 0 )
+
+// --- Page 2: Pricing & Sentiment -----------------------------------------------
+
+Positive Review Ratio =
+// Review-weighted sentiment: total positive ratings over total ratings.
+// Safe against divide-by-zero via DIVIDE.
+DIVIDE (
+    SUM ( SteamGames[positive_ratings] ),
+    SUM ( SteamGames[total_reviews] )
+)
+
+Games with 50+ Reviews =
+CALCULATE ( COUNTROWS ( SteamGames ), SteamGames[total_reviews] >= 50 )
+
+// --- Page 3: Genre Deep-Dive ----------------------------------------------------
+
+Avg Playtime (hrs) =
+AVERAGE ( SteamGames[average_playtime] )
+
+Games in Selection =
+// Responds to slicers (e.g. genre slicer) — handy for card titles.
+COUNTROWS ( SteamGames )
